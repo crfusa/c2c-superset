@@ -97,8 +97,10 @@ class CeleryConfig:
 
 CELERY_CONFIG = CeleryConfig
 
+# https://gist.github.com/jackgray/138c780a0a9e3a59ab51af98da322119
+
 # PUBLIC_ROLE_LIKE_GAMMA = True
-# GUEST_ROLE_NAME = "Gamma"
+GUEST_ROLE_NAME = "Gamma"
 OVERRIDE_HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 TALISMAN_ENABLED = False
 # ENABLE_CORS = True
