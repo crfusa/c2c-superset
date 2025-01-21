@@ -32,22 +32,15 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-04-01' = {
     }
   }
 
-  // Blobs
-  // resource blobService 'blobServices' = {
-  //   name: 'default'
-  //   properties: {
-  //     lastAccessTimeTrackingPolicy: {
-  //       name: 'AccessTimeTracking'
-  //       trackingGranularityInDays: 1
-  //       enable: true
-  //       blobType: [
-  //         'blockBlob'
-  //       ]
-  //     }
-  //   }
-  // }
+  resource fileshares 'fileServices' = {
+    name: 'default'
 
-  // TODO
+    // FileShares
+    resource configuration 'shares' = {
+      name: take('configuration-${name}', 32)
+    }
+  }
+
 }
 
 // Outputs
@@ -55,3 +48,5 @@ output tableEndpoint string = storageAccount.properties.primaryEndpoints.table
 output queueEndpoint string = storageAccount.properties.primaryEndpoints.queue
 output blobEndpoint string = storageAccount.properties.primaryEndpoints.blob
 output fileEndpoint string = storageAccount.properties.primaryEndpoints.file
+output storageAccountName string = name
+output shareName string = storageAccount::fileshares::configuration.name

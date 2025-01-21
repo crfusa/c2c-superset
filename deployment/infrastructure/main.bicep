@@ -79,7 +79,7 @@ module internalStorage './main-internalstorage.bicep' = {
     name: storageName(env, 'store')
     location: location
     sku: isProd ? 'Standard_RAGRS' : 'Standard_LRS'
-    allowSharedKeyAuth: false
+    allowSharedKeyAuth: true
     vnetSubnets: [
       vnet.outputs.appSubnetId
     ]
@@ -159,5 +159,23 @@ module appEnvironment './main-appenvironment.bicep' = {
     insightsWorkspaceName: logAnalyticsWorkspace.name
     infrastructureSubnetId: vnet.outputs.appSubnetId
     zoneRedundant: isProd
+  }
+}
+
+module appSuperset './main-supersetcontainer-app.bicep' = {
+  name: 'app-superset'
+  params: {
+    name: 'app-superset'
+    location: location
+    appEnvironmentId: appEnvironment.outputs.environmentId
+    image: '${imageRegistry}/c2c-superset/superset:${imageTag}'
+    external: true
+    identityId: appIdentity.outputs.resourceId
+    identityClientId: appIdentity.outputs.clientId
+    storageAccountName: internalStorage.outputs.storageAccountName
+    storageShareName: internalStorage.outputs.shareName
+    // scaleRules: []
+    // secrets: []
+    // environment: []
   }
 }
