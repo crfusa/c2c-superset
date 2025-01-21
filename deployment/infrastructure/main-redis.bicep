@@ -96,6 +96,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
   }
 }
 
+output name string = name
 output id string = redisCache.id
 output hostname string = redisCache.properties.hostName
 output port int = redisCache.properties.sslPort
