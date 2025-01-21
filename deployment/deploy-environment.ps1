@@ -21,6 +21,10 @@ if ($PromptForSecrets) {
     $PostgresAdminPasswordSecret = Read-Host -Prompt "Postgres Admin Password" -AsSecureString | ConvertFrom-SecureString -AsPlainText
     if ($PostgresAdminPasswordSecret) { $parameters += "--parameters", "postgresAdminPassword=$PostgresAdminPasswordSecret" }
 
+    # Prompt for Superset Secret
+    $SupersetSecret = Read-Host -Prompt "Superset Secret" -AsSecureString | ConvertFrom-SecureString -AsPlainText
+    if ($SupersetSecret) { $parameters += "--parameters", "supersetSecret=$SupersetSecret" }
+
     $ErrorActionPreference = 'Continue'
 }
 

@@ -1,13 +1,14 @@
 param name string
 param location string
 param appEnvironmentId string
+param appEnvironmentName string
 param identityId string
-param identityClientId string
+// param identityClientId string
 param image string
 
 param revisionMode 'Single' | 'Multiple' = 'Single'
 
-param appPort int = 3000
+param appPort int = 8088
 param external bool
 
 param cpu string = '.25'
@@ -32,7 +33,6 @@ param serviceBindings {
   serviceId: string
 }[] = []
 
-
 param storageAccountName string
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' existing = {
@@ -43,6 +43,7 @@ param storageShareName string
 module share './resource-share.bicep' = {
   name: 'docker-conf'
   params: {
+    appEnvironmentName: appEnvironmentName
     shareName: 'docker-conf'
     accessMode: 'ReadWrite'
     storageAccountName: storageAccountName
@@ -82,13 +83,51 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
       serviceBinds: serviceBindings
       terminationGracePeriodSeconds: 180
 
-      #disable-next-line BCP036 // CPU and memory are intentionally strings, since int does not allow fractional values
-      initContainers: [
+      scale: {
+        minReplicas: 1
+      }
+
+      // initContainers: [
+      //   {
+      //     name: 'superset-init'
+      //     image: image
+      //     command: [
+      //       '/app/docker/docker-init.sh'
+      //     ]
+      //     env: [
+      //       ...environment
+      //     ]
+      //     volumeMounts: [
+      //       {
+      //         mountPath: '/app/docker'
+      //         volumeName: 'docker-conf'
+      //         subPath: 'superset_docker'
+      //       }
+      //       {
+      //         mountPath: '/app/superset_home'
+      //         volumeName: 'docker-conf'
+      //         subPath: 'superset_home'
+      //       }
+      //     ]
+      //     resources: {
+      //       cpu: json('.25')
+      //       memory: '.5Gi'
+      //     }
+      //   }
+      // ]
+
+      containers: [
+
+        // Application
         {
-          name: 'superset-init'
+          name: name
           image: image
           command: [
-            '/app/docker/docker-init.sh'
+            '/app/docker/docker-bootstrap.sh'
+            'app-gunicorn'
+          ]
+          env: [
+            ...environment
           ]
           volumeMounts: [
             {
@@ -103,31 +142,9 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
             }
           ]
           resources: {
-            cpu: json('.25')
-            memory: '.5Gi'
-          }
-        }
-      ]
-
-      containers: [
-
-        // Application
-        {
-          name: name
-          image: image
-          resources: {
             cpu: json(cpu)
             memory: memory
           }
-          env: [
-            { name: 'OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES', value: 'true' }
-            { name: 'OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES', value: 'true' }
-            { name: 'OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY', value: 'in_memory' }
-            { name: 'AZURE_CLIENT_ID', value: identityClientId }
-
-            // Add environment parameters
-            ...environment
-          ]
         }
       ]
 

@@ -8,6 +8,9 @@ param isProd bool = true
 @secure()
 param postgresAdminPassword string = ''
 
+@secure()
+param supersetSecret string = ''
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2020-06-01' = {
   name: environment
   location: location
@@ -23,5 +26,6 @@ module main 'main.bicep' = {
     location: location
 
     postgresAdminPassword: postgresAdminPassword
+    supersetSecret: supersetSecret
   }
 }

@@ -7,6 +7,9 @@ param isProd bool = true
 @secure()
 param postgresAdminPassword string = ''
 
+@secure()
+param supersetSecret string = ''
+
 var resourceToken = uniqueString(resourceGroup().id)
 
 // Helper function to generate a storage account name
@@ -63,12 +66,21 @@ resource keyVaultRef 'Microsoft.KeyVault/vaults@2021-10-01' existing = {
   dependsOn: [ keyVault ]
 }
 
-module pgAdminPassword './resource-vaultsecret.bicep' = {
+module secretPgAdminPassword './resource-vaultsecret.bicep' = {
   name: 'postgres-adminpassword'
   params: {
     vaultName: keyVault.outputs.vaultName
     secretName: 'PostgresPassword'
     value: postgresAdminPassword
+  }
+}
+
+module secretSupersetSecret './resource-vaultsecret.bicep' = {
+  name: 'superset-secret'
+  params: {
+    vaultName: keyVault.outputs.vaultName
+    secretName: 'SupersetSecret'
+    value: supersetSecret
   }
 }
 
@@ -78,7 +90,6 @@ module internalStorage './main-internalstorage.bicep' = {
   params: {
     name: storageName(env, 'store')
     location: location
-    sku: isProd ? 'Standard_RAGRS' : 'Standard_LRS'
     allowSharedKeyAuth: true
     vnetSubnets: [
       vnet.outputs.appSubnetId
@@ -94,7 +105,7 @@ module db './main-postgres.bicep' = {
     name: '${env}-postgres'
     sku:'Standard_B1ms'
     tier: 'Burstable'
-    databaseName: 'connect'
+    databaseName: 'superset'
     storageSizeGB: isProd ? 128 : 32
     backupRetentionDays: isProd ? 30 : 7
     pgVersion: '15'
@@ -102,7 +113,6 @@ module db './main-postgres.bicep' = {
     highAvailability: false
     geoRedundantBackup: false
     adminUsername: 'c2cadmin'
-    // adminPassword: postgresAdminPassword
     adminPassword: !empty(postgresAdminPassword)
       ? postgresAdminPassword
       : keyVaultRef.getSecret('PostgresPassword')
@@ -142,10 +152,10 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   }
 }
 
-// Build connection strings
-var postgresConnection = 'Host=${db.outputs.hostname};Username=${appIdentity.outputs.name};Database=${db.outputs.appDbName};Ssl Mode=Require'
-var redisConnection = '${cache.outputs.hostname}:${cache.outputs.port},User=${appIdentity.outputs.principalId},ssl=True,abortConnect=False'
-var pgDefaultMaxConnections = 5
+// // Build connection strings
+// var postgresConnection = 'Host=${db.outputs.hostname};Username=${appIdentity.outputs.name};Database=${db.outputs.appDbName};Ssl Mode=Require'
+// var redisConnection = '${cache.outputs.hostname}:${cache.outputs.port},User=${appIdentity.outputs.principalId},ssl=True,abortConnect=False'
+// var pgDefaultMaxConnections = 5
 
 func pgConnection(postgresConnection string, maxPoolSize int) string =>
   '${postgresConnection};Maximum Pool Size=${maxPoolSize}'
@@ -164,18 +174,76 @@ module appEnvironment './main-appenvironment.bicep' = {
 
 module appSuperset './main-supersetcontainer-app.bicep' = {
   name: 'app-superset'
+  dependsOn: [
+    roleAssignments
+    sharedRoleAssignments
+  ]
   params: {
     name: 'app-superset'
     location: location
+    appEnvironmentName: appEnvironment.outputs.name
     appEnvironmentId: appEnvironment.outputs.environmentId
     image: '${imageRegistry}/c2c-superset/superset:${imageTag}'
     external: true
     identityId: appIdentity.outputs.resourceId
-    identityClientId: appIdentity.outputs.clientId
+    // identityClientId: appIdentity.outputs.clientId
     storageAccountName: internalStorage.outputs.storageAccountName
     storageShareName: internalStorage.outputs.shareName
+    secrets: [
+      {
+        name: 'pg-password'
+        keyVaultUrl: secretPgAdminPassword.outputs.secretUri
+        identity: appIdentity.outputs.resourceId
+      }
+      {
+        name: 'superset-secret'
+        keyVaultUrl: secretSupersetSecret.outputs.secretUri
+        identity: appIdentity.outputs.resourceId
+      }
+    ]
+    environment: [
+      { name: 'DATABASE_DIALECT', value: 'postgresql' }
+      { name: 'DATABASE_USER', value: 'c2cadmin' }
+      { name: 'DATABASE_PASSWORD', secretRef: 'pg-password' }
+      { name: 'DATABASE_HOST', value: db.outputs.hostname }
+      { name: 'DATABASE_PORT', value: '5432' }
+      { name: 'DATABASE_DB', value: 'superset' }
+      { name: 'SUPERSET_SECRET_KEY', secretRef: 'superset-secret' }
+      { name: 'PYTHONPATH', value: '/app/docker/pythonpath' }
+      { name: 'FLASK_DEBUG', value: 'true' }
+      { name: 'SUPERSET_ENV', value: 'production' }
+      { name: 'SUPERSET_PORT', value: '8088' }
+      { name: 'SUPERSET_CONFIG_PATH', value: '/app/docker/pythonpath/superset_config.py' }
+    ]
     // scaleRules: []
     // secrets: []
     // environment: []
+  }
+}
+
+// Assign App Role(s)
+module roleAssignments 'resource-assign-roles.bicep' = {
+  name: 'app-apiroles'
+  params: {
+    roleIds: [
+      '4633458b-17de-408a-b874-0445c86b69e6' // Key vault secret user
+      // 'b24988ac-6180-42a0-ab88-20f7382dd24c' // Contributor
+    ]
+    principalId: appIdentity.outputs.principalId
+  }
+}
+
+// Assign ACR pull
+module sharedRoleAssignments 'resource-assign-roles.bicep' = {
+  name: 'app-apisharedroles'
+  scope: resourceGroup('f383d19f-1450-426a-bcac-8adc649b71ce', 'c2c-shared')
+  params: {
+    roleIds: [
+      '2efddaa5-3f1f-4df3-97df-af3f13818f4c' // Acr Repo Contributor
+      '7f951dda-4ed3-4680-a7ca-43fe172d538d' // AcrPull
+      '8311e382-0749-4cb8-b61a-304f252e45ec' // AcrPush
+      '17d1049b-9a84-46fb-8f53-869881c3d3ab' // Storage account contributor
+    ]
+    principalId: appIdentity.outputs.principalId
   }
 }
