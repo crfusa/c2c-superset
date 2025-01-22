@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 param (
-    [string] $Environment = "c2c-shared-superset",
+    [string] $Environment = "c2c-superset",
     [string] $Subscription = "f383d19f-1450-426a-bcac-8adc649b71ce",
     [string] $ImageTag = "latest",
     [switch] $PromptForSecrets
