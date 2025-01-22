@@ -30,6 +30,7 @@ fi
 #
 if [ -f "${REQUIREMENTS_LOCAL}" ]; then
   echo "Installing local overrides at ${REQUIREMENTS_LOCAL}"
+  apt-get update && apt-get install -y build-essential
   pip install --no-cache-dir -r "${REQUIREMENTS_LOCAL}"
 else
   echo "Skipping local overrides"

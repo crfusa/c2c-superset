@@ -2,7 +2,6 @@ targetScope = 'subscription'
 
 param location string = deployment().location
 param environment string
-param imageTag string = 'latest'
 param isProd bool = true
 
 @secure()
@@ -22,7 +21,6 @@ module main 'main.bicep' = {
   params: {
     env: environment
     isProd: isProd
-    imageTag: imageTag
     location: location
 
     postgresAdminPassword: postgresAdminPassword

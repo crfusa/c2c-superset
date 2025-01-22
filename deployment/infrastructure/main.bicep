@@ -1,7 +1,7 @@
 param env string = resourceGroup().name
 param location string = resourceGroup().location
-param imageRegistry string = 'c2cshared.azurecr.io'
-param imageTag string = 'latest'
+// param imageRegistry string = 'c2cshared.azurecr.io'
+// param imageTag string = 'latest'
 param isProd bool = true
 
 @secure()
@@ -183,12 +183,14 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
     location: location
     appEnvironmentName: appEnvironment.outputs.name
     appEnvironmentId: appEnvironment.outputs.environmentId
-    image: '${imageRegistry}/c2c-superset/superset:${imageTag}'
+    image: 'apache/superset:4.1.1'
+    // image: '${imageRegistry}/c2c-superset/superset:${imageTag}'
     external: true
     identityId: appIdentity.outputs.resourceId
     // identityClientId: appIdentity.outputs.clientId
     storageAccountName: internalStorage.outputs.storageAccountName
     storageShareName: internalStorage.outputs.shareName
+    cacheName: cache.outputs.name
     secrets: [
       {
         name: 'pg-password'
@@ -202,12 +204,18 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
       }
     ]
     environment: [
+      // Database
       { name: 'DATABASE_DIALECT', value: 'postgresql' }
       { name: 'DATABASE_USER', value: 'c2cadmin' }
       { name: 'DATABASE_PASSWORD', secretRef: 'pg-password' }
       { name: 'DATABASE_HOST', value: db.outputs.hostname }
       { name: 'DATABASE_PORT', value: '5432' }
       { name: 'DATABASE_DB', value: 'superset' }
+      // Redis
+      { name: 'REDIS_HOST', value: cache.outputs.hostname  }
+      { name: 'REDIS_PORT', value: '${cache.outputs.port}' }
+      { name: 'REDIS_PASSWORD', secretRef: 'redis-key' }
+      // Superset
       { name: 'SUPERSET_SECRET_KEY', secretRef: 'superset-secret' }
       { name: 'PYTHONPATH', value: '/app/docker/pythonpath' }
       { name: 'FLASK_DEBUG', value: 'true' }

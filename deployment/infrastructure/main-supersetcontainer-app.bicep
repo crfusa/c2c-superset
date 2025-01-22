@@ -52,6 +52,11 @@ module share './resource-share.bicep' = {
   }
 }
 
+param cacheName string
+resource cacheRef 'Microsoft.Cache/redis@2023-08-01' existing = {
+  name: cacheName
+}
+
 resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
   name: name
   location: location
@@ -76,7 +81,13 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
         targetPort: appPort
       }
       activeRevisionsMode: revisionMode
-      secrets: secrets
+      secrets: [
+        ...secrets
+        {
+          name: 'redis-key'
+          value: cacheRef.listKeys().primaryKey
+        }
+      ]
     }
 
     template: {
@@ -89,7 +100,7 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
 
       // initContainers: [
       //   {
-      //     name: 'superset-init'
+      //     name: 'init-superset'
       //     image: image
       //     command: [
       //       '/app/docker/docker-init.sh'
@@ -105,8 +116,7 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
       //       }
       //       {
       //         mountPath: '/app/superset_home'
-      //         volumeName: 'docker-conf'
-      //         subPath: 'superset_home'
+      //         volumeName: 'superset-home'
       //       }
       //     ]
       //     resources: {
@@ -137,8 +147,7 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
             }
             {
               mountPath: '/app/superset_home'
-              volumeName: 'docker-conf'
-              subPath: 'superset_home'
+              volumeName: 'superset-home'
             }
           ]
           resources: {
@@ -153,6 +162,10 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
           name: 'docker-conf'
           storageType: 'AzureFile'
           storageName: share.outputs.shareName
+        }
+        {
+          name: 'superset-home'
+          storageType: 'EmptyDir'
         }
       ]
     }

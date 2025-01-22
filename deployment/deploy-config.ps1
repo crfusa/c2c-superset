@@ -1,8 +1,8 @@
 #!/usr/bin/env pwsh
 param (
     [string] $Subscription = "f383d19f-1450-426a-bcac-8adc649b71ce",
-    [string] $AccountName = "c2csharedsupersetstore",
-    [string] $ShareName = "configuration-c2csharedsupersets"
+    [string] $AccountName = "c2csupersetstore",
+    [string] $ShareName = "configuration-c2csupersetstore"
 )
 
 # Get storage account key
