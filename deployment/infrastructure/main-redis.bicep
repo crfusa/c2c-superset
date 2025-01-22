@@ -16,12 +16,12 @@ resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
   name: name
   location: location
   properties: {
-    enableNonSslPort: true // Superset doesnt easily support SSL
+    enableNonSslPort: false
     minimumTlsVersion: '1.2'
     publicNetworkAccess: allowPublicAccess ? 'Enabled' : 'Disabled'
-    // redisConfiguration: {
-    //   'aad-enabled': 'true'
-    // }
+    redisConfiguration: {
+      'aad-enabled': 'true'
+    }
     redisVersion: '6'
     sku: {
       name: sku

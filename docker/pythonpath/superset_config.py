@@ -22,10 +22,11 @@
 #
 import logging
 import os
+import ssl
 
 from celery.schedules import crontab
-from flask_caching.backends.filesystemcache import FileSystemCache
-# from flask_caching.backends.rediscache import RedisCache
+# from flask_caching.backends.filesystemcache import FileSystemCache
+from flask_caching.backends.rediscache import RedisCache
 
 logger = logging.getLogger()
 
@@ -59,35 +60,39 @@ SQLALCHEMY_EXAMPLES_URI = (
 
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+REDIS_USER = os.getenv("REDIS_USER", "")
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
 REDIS_CELERY_DB = os.getenv("REDIS_CELERY_DB", "0")
 REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "1")
-REDIS_SSL = os.getenv("REDIS_SSL", "false")
+REDIS_SSL = os.getenv("REDIS_SSL", "true")
+REDIS_URL_PREFIX = "rediss" if REDIS_SSL == "true" else "redis"
 
-RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
-# RESULTS_BACKEND = RedisCache(host=REDIS_HOST, password=CACHE_REDIS_PASSWORD, port=REDIS_PORT, db=REDIS_RESULTS_DB, key_prefix='superset_results', ssl=True)
+# RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
+RESULTS_BACKEND = RedisCache(host=REDIS_HOST, password=REDIS_PASSWORD, port=REDIS_PORT, db=REDIS_RESULTS_DB, key_prefix='superset_results', ssl=True)
+
 
 CACHE_CONFIG = {
     "CACHE_TYPE": "RedisCache",
-    "CACHE_DEFAULT_TIMEOUT": 300,
+    "CACHE_DEFAULT_TIMEOUT": 120,
     "CACHE_KEY_PREFIX": "superset_",
-    "CACHE_REDIS_HOST": REDIS_HOST,
-    "CACHE_REDIS_PORT": REDIS_PORT,
-    "CACHE_REDIS_PASSWORD": REDIS_PASSWORD,
-    "CACHE_REDIS_DB": REDIS_RESULTS_DB,
+    # "CACHE_REDIS_HOST": REDIS_HOST,
+    # "CACHE_REDIS_PORT": REDIS_PORT,
+    # "CACHE_REDIS_PASSWORD": REDIS_PASSWORD,
+    # "CACHE_REDIS_DB": REDIS_RESULTS_DB,
+    "CACHE_REDIS_URL": f"{REDIS_URL_PREFIX}://{REDIS_USER}:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}",
 }
 DATA_CACHE_CONFIG = CACHE_CONFIG
 
-
 class CeleryConfig:
-    broker_url = f"redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
+    broker_url = f"{REDIS_URL_PREFIX}://{REDIS_USER}:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
+    broker_use_ssl={'ssl_cert_reqs': ssl.CERT_NONE}
     imports = (
         "superset.sql_lab",
         "superset.tasks.scheduler",
         "superset.tasks.thumbnails",
         "superset.tasks.cache",
     )
-    result_backend = f"redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"
+    result_backend = f"{REDIS_URL_PREFIX}://{REDIS_USER}:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"
     worker_prefetch_multiplier = 1
     task_acks_late = False
     beat_schedule = {

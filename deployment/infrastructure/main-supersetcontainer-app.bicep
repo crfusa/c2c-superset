@@ -14,6 +14,8 @@ param external bool
 param cpu string = '.25'
 param memory string = '.5Gi'
 
+param initializeSuperset bool = false
+
 @description('Array of objects with `name` and `secretRef` or `value`')
 param environment {
   name: string
@@ -98,7 +100,7 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
         minReplicas: 1
       }
 
-      initContainers: [
+      initContainers: initializeSuperset ? [
         {
           name: 'init-superset'
           image: image
@@ -124,7 +126,7 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
             memory: '.5Gi'
           }
         }
-      ]
+      ] : []
 
       containers: [
 

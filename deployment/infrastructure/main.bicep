@@ -211,12 +211,13 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
       { name: 'DATABASE_HOST', value: db.outputs.hostname }
       { name: 'DATABASE_PORT', value: '5432' }
       { name: 'DATABASE_DB', value: 'superset' }
+
       // Redis
       { name: 'REDIS_HOST', value: cache.outputs.hostname  }
-      { name: 'REDIS_PORT', value: '${cache.outputs.port}' }
+      { name: 'REDIS_PORT', value: '${cache.outputs.sslPort}' }
       { name: 'REDIS_PASSWORD', secretRef: 'redis-key' }
-      // { name: 'REDIS_SSL', value: 'false' }
-      // { name: 'REDIS_SSL_CERT_REQS', value: 'NONE' }
+      { name: 'REDIS_SSL', value: 'true' }
+
       // Superset
       { name: 'SUPERSET_SECRET_KEY', secretRef: 'superset-secret' }
       { name: 'PYTHONPATH', value: '/app/docker/pythonpath' }
