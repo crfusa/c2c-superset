@@ -98,33 +98,33 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
         minReplicas: 1
       }
 
-      // initContainers: [
-      //   {
-      //     name: 'init-superset'
-      //     image: image
-      //     command: [
-      //       '/app/docker/docker-init.sh'
-      //     ]
-      //     env: [
-      //       ...environment
-      //     ]
-      //     volumeMounts: [
-      //       {
-      //         mountPath: '/app/docker'
-      //         volumeName: 'docker-conf'
-      //         subPath: 'superset_docker'
-      //       }
-      //       {
-      //         mountPath: '/app/superset_home'
-      //         volumeName: 'superset-home'
-      //       }
-      //     ]
-      //     resources: {
-      //       cpu: json('.25')
-      //       memory: '.5Gi'
-      //     }
-      //   }
-      // ]
+      initContainers: [
+        {
+          name: 'init-superset'
+          image: image
+          command: [
+            '/app/docker/docker-init.sh'
+          ]
+          env: [
+            ...environment
+          ]
+          volumeMounts: [
+            {
+              mountPath: '/app/docker'
+              volumeName: 'docker-conf'
+              subPath: 'superset_docker'
+            }
+            {
+              mountPath: '/app/superset_home'
+              volumeName: 'superset-home'
+            }
+          ]
+          resources: {
+            cpu: json('.25')
+            memory: '.5Gi'
+          }
+        }
+      ]
 
       containers: [
 
