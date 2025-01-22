@@ -16,12 +16,12 @@ resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
   name: name
   location: location
   properties: {
-    enableNonSslPort: false
+    enableNonSslPort: true // Superset doesnt easily support SSL
     minimumTlsVersion: '1.2'
     publicNetworkAccess: allowPublicAccess ? 'Enabled' : 'Disabled'
-    redisConfiguration: {
-      'aad-enabled': 'true'
-    }
+    // redisConfiguration: {
+    //   'aad-enabled': 'true'
+    // }
     redisVersion: '6'
     sku: {
       name: sku
@@ -99,5 +99,6 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
 output name string = name
 output id string = redisCache.id
 output hostname string = redisCache.properties.hostName
-output port int = redisCache.properties.sslPort
+output port int = redisCache.properties.port
+output sslPort int = redisCache.properties.sslPort
 output networkInterfaceId string = privateEndpoint.properties.networkInterfaces[0].id

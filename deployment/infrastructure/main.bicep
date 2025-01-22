@@ -132,7 +132,7 @@ module cache './main-redis.bicep' = {
     sku: 'Basic'
     capacity: 0
     family: 'C'
-    allowPublicAccess: !isProd
+    allowPublicAccess: true //!isProd
     appPrincipalId: appIdentity.outputs.principalId
     appPrincipalName: appIdentity.outputs.name
     vnetId: vnet.outputs.vnetId
@@ -215,6 +215,8 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
       { name: 'REDIS_HOST', value: cache.outputs.hostname  }
       { name: 'REDIS_PORT', value: '${cache.outputs.port}' }
       { name: 'REDIS_PASSWORD', secretRef: 'redis-key' }
+      // { name: 'REDIS_SSL', value: 'false' }
+      // { name: 'REDIS_SSL_CERT_REQS', value: 'NONE' }
       // Superset
       { name: 'SUPERSET_SECRET_KEY', secretRef: 'superset-secret' }
       { name: 'PYTHONPATH', value: '/app/docker/pythonpath' }
