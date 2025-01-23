@@ -218,7 +218,7 @@ OAUTH_PROVIDERS = [
 AUTH_USER_REGISTRATION = True
 
 # The default user self registration role
-AUTH_USER_REGISTRATION_ROLE = "Public"
+AUTH_USER_REGISTRATION_ROLE = "Gamma"
 
 #
 # Optionally import superset_config_docker.py (which will have been included on
