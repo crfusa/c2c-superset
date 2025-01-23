@@ -23,10 +23,13 @@
 import logging
 import os
 import ssl
+from superset.security import SupersetSecurityManager
 
 from celery.schedules import crontab
 # from flask_caching.backends.filesystemcache import FileSystemCache
 from flask_caching.backends.rediscache import RedisCache
+from flask_appbuilder.security.manager import AUTH_DB, AUTH_OAUTH
+from custom_sso_security_manager import CustomSsoSecurityManager
 
 logger = logging.getLogger()
 
@@ -42,6 +45,11 @@ EXAMPLES_PASSWORD = os.getenv("EXAMPLES_PASSWORD")
 EXAMPLES_HOST = os.getenv("EXAMPLES_HOST")
 EXAMPLES_PORT = os.getenv("EXAMPLES_PORT")
 EXAMPLES_DB = os.getenv("EXAMPLES_DB")
+
+AUTH_TYPE_NAME = os.getenv("AUTH_TYPE_NAME", "AUTH_DB")
+AUTH_OAUTH_CLIENTID = os.getenv("AUTH_OAUTH_CLIENTID", "")
+AUTH_OAUTH_CLIENTSECRET = os.getenv("AUTH_OAUTH_CLIENTSECRET", "")
+AUTH_OAUTH_TENANTID = os.getenv("AUTH_OAUTH_TENANTID", "")
 
 logger.info(f"DATABASE_HOST: {DATABASE_HOST}")
 
@@ -140,6 +148,77 @@ CORS_OPTIONS = {
   'origins': ['*']
 }
 
+
+ENABLE_PROXY_FIX = True
+PROXY_FIX_CONFIG = {
+    "x_for": 1,
+    "x_proto": 1,
+    "x_host": 1,
+    "x_port": 0,
+    "x_prefix": 1,
+}
+
+### AUTH OPTIONS
+class CustomSsoSecurityManager(SupersetSecurityManager):
+    def oauth_user_info(self, provider, response=None):
+        logging.debug("Oauth2 provider: {0}.".format(provider))
+        if provider == 'azure' or provider == 'microsoft':
+            # As example, this line request a GET to base_url + '/' + userDetails with Bearer  Authentication,
+            # and expects that authorization server checks the token, and response with user details
+            # me = self.appbuilder.sm.oauth_remotes[provider].get('userDetails').data
+            me = self._decode_and_validate_azure_jwt(response["id_token"])
+            logging.debug("user_data: {0}".format(me))
+            first_name = me.get('given_name', '')
+            last_name = me.get('family_name', '')
+            name = me.get('name', '')
+
+            if not first_name and not last_name and name:
+                name_parts = name.split()
+                if len(name_parts) >= 2:
+                    first_name = name_parts[0]
+                    last_name = ' '.join(name_parts[1:])
+                elif len(name_parts) == 1:
+                    first_name = name_parts[0]
+            
+            return {
+                'name': name,
+                'email': me.get('email', ''),
+                'id': me.get('sub', ''),
+                'username': me.get('preferred_username', ''),
+                'first_name': first_name,
+                'last_name': last_name,
+            }
+
+CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
+AUTH_TYPE = AUTH_OAUTH if AUTH_TYPE_NAME == "AUTH_OAUTH" else AUTH_DB
+
+OAUTH_PROVIDERS = [
+  {
+    'name': 'azure',
+    'icon': 'fa-windows',
+    'token_key': 'access_token',
+    'remote_app': {
+      'client_id': AUTH_OAUTH_CLIENTID,
+      'client_secret': AUTH_OAUTH_CLIENTSECRET,
+      'api_base_url': f'https://login.microsoftonline.com/{AUTH_OAUTH_TENANTID}/oauth2/v2.0',
+      'server_metadata_url': f'https://login.microsoftonline.com/{AUTH_OAUTH_TENANTID}/v2.0/.well-known/openid-configuration',
+      'jwks_uri': f'https://login.microsoftonline.com/{AUTH_OAUTH_TENANTID}/discovery/v2.0/keys',
+      'client_kwargs': {
+        'scope': 'User.read openid profile email',
+        "resource": "RESOURCE_ID",
+      },
+      'request_token_url': None,
+      'access_token_url': f'https://login.microsoftonline.com/{AUTH_OAUTH_TENANTID}/oauth2/v2.0/token',
+      'authorize_url': f'https://login.microsoftonline.com/{AUTH_OAUTH_TENANTID}/oauth2/v2.0/authorize',
+    }
+  }
+]
+
+# Enable multiple authentication types
+AUTH_USER_REGISTRATION = True
+
+# The default user self registration role
+AUTH_USER_REGISTRATION_ROLE = "Public"
 
 #
 # Optionally import superset_config_docker.py (which will have been included on

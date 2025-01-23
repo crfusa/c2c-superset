@@ -10,6 +10,9 @@ param postgresAdminPassword string = ''
 @secure()
 param supersetSecret string = ''
 
+@secure()
+param microsoftAuthClientSecret string = ''
+
 var resourceToken = uniqueString(resourceGroup().id)
 
 // Helper function to generate a storage account name
@@ -81,6 +84,15 @@ module secretSupersetSecret './resource-vaultsecret.bicep' = {
     vaultName: keyVault.outputs.vaultName
     secretName: 'SupersetSecret'
     value: supersetSecret
+  }
+}
+
+module secretMicrosoftAuthClientSecret './resource-vaultsecret.bicep' = {
+  name: 'microsoft-auth-client-secret'
+  params: {
+    vaultName: keyVault.outputs.vaultName
+    secretName: 'MicrosoftAuthClientSecret'
+    value: microsoftAuthClientSecret
   }
 }
 
@@ -202,6 +214,11 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
         keyVaultUrl: secretSupersetSecret.outputs.secretUri
         identity: appIdentity.outputs.resourceId
       }
+      {
+        name: 'mic-auth-client-secret'
+        keyVaultUrl: secretMicrosoftAuthClientSecret.outputs.secretUri
+        identity: appIdentity.outputs.resourceId
+      }
     ]
     environment: [
       // Database
@@ -225,6 +242,12 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
       { name: 'SUPERSET_ENV', value: 'production' }
       { name: 'SUPERSET_PORT', value: '8088' }
       { name: 'SUPERSET_CONFIG_PATH', value: '/app/docker/pythonpath/superset_config.py' }
+
+      // Auth
+      { name: 'AUTH_TYPE_NAME', value: 'AUTH_OAUTH' }
+      { name: 'AUTH_OAUTH_CLIENTID', value: '1da250e9-31d2-4099-9491-38a03a67bdc5' }
+      { name: 'AUTH_OAUTH_CLIENTSECRET', secretRef: 'mic-auth-client-secret' }
+      { name: 'AUTH_OAUTH_TENANTID', value: 'e04b402a-cd4a-47f5-ab4c-8d132f96d81f' }
     ]
     // scaleRules: []
     // secrets: []

@@ -25,6 +25,10 @@ if ($PromptForSecrets) {
     $SupersetSecret = Read-Host -Prompt "Superset Secret" -AsSecureString | ConvertFrom-SecureString -AsPlainText
     if ($SupersetSecret) { $parameters += "--parameters", "supersetSecret=$SupersetSecret" }
 
+    # Prompt for Microsoft Auth client secrete
+    $MicrosoftAuthClientSecret = Read-Host -Prompt "Microsoft Auth Client Secret" -AsSecureString | ConvertFrom-SecureString -AsPlainText
+    if ($MicrosoftAuthClientSecret) { $parameters += "--parameters", "microsoftAuthClientSecret=$MicrosoftAuthClientSecret" }
+
     $ErrorActionPreference = 'Continue'
 }
 
