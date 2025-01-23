@@ -29,6 +29,10 @@ if ($PromptForSecrets) {
     $MicrosoftAuthClientSecret = Read-Host -Prompt "Microsoft Auth Client Secret" -AsSecureString | ConvertFrom-SecureString -AsPlainText
     if ($MicrosoftAuthClientSecret) { $parameters += "--parameters", "microsoftAuthClientSecret=$MicrosoftAuthClientSecret" }
 
+    # Prompt for SMTP password
+    $SMTPPassword = Read-Host -Prompt "SMTP Password" -AsSecureString | ConvertFrom-SecureString -AsPlainText
+    if ($SMTPPassword) { $parameters += "--parameters", "smtpPasswordSecret=$SMTPPassword" }
+
     $ErrorActionPreference = 'Continue'
 }
 

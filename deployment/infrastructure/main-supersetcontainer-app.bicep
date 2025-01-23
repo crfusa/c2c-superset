@@ -157,6 +157,62 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
             memory: memory
           }
         }
+
+        // Worker
+        {
+          name: '${name}-worker'
+          image: image
+          command: [
+            '/app/docker/docker-bootstrap.sh'
+            'worker'
+          ]
+          env: [
+            ...environment
+          ]
+          volumeMounts: [
+            {
+              mountPath: '/app/docker'
+              volumeName: 'docker-conf'
+              subPath: 'superset_docker'
+            }
+            {
+              mountPath: '/app/superset_home'
+              volumeName: 'superset-home'
+            }
+          ]
+          resources: {
+            cpu: json('0.75')
+            memory: '1.5Gi'
+          }
+        }
+
+        // Beat
+        {
+          name: '${name}-beat'
+          image: image
+          command: [
+            '/app/docker/docker-bootstrap.sh'
+            'beat'
+          ]
+          env: [
+            ...environment
+          ]
+          volumeMounts: [
+            {
+              mountPath: '/app/docker'
+              volumeName: 'docker-conf'
+              subPath: 'superset_docker'
+            }
+            {
+              mountPath: '/app/superset_home'
+              volumeName: 'superset-home'
+            }
+          ]
+          resources: {
+            cpu: json(cpu)
+            memory: memory
+          }
+        }
       ]
 
       volumes: [

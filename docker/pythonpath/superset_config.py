@@ -75,6 +75,8 @@ REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "1")
 REDIS_SSL = os.getenv("REDIS_SSL", "true")
 REDIS_URL_PREFIX = "rediss" if REDIS_SSL == "true" else "redis"
 
+CONTAINER_APP_HOSTNAME = os.getenv("CONTAINER_APP_HOSTNAME", "localhost")
+
 # RESULTS_BACKEND = FileSystemCache("/app/superset_home/sqllab")
 RESULTS_BACKEND = RedisCache(host=REDIS_HOST, password=REDIS_PASSWORD, port=REDIS_PORT, db=REDIS_RESULTS_DB, key_prefix='superset_results', ssl=True)
 
@@ -94,6 +96,7 @@ DATA_CACHE_CONFIG = CACHE_CONFIG
 class CeleryConfig:
     broker_url = f"{REDIS_URL_PREFIX}://{REDIS_USER}:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
     broker_use_ssl={'ssl_cert_reqs': ssl.CERT_NONE}
+    redis_backend_use_ssl = {'ssl_cert_reqs': ssl.CERT_NONE}
     imports = (
         "superset.sql_lab",
         "superset.tasks.scheduler",
@@ -135,10 +138,29 @@ FEATURE_FLAGS = {
     "ALERT_REPORTS": True,
     "EMBEDDED_SUPERSET": True,
 }
-ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
-WEBDRIVER_BASEURL = "http://superset:8088/"  # When using docker compose baseurl should be http://superset_app:8088/
+# ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
+
+
+# Email configuration
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.sendgrid.net") # change to your host
+SMTP_PORT = 587
+SMTP_STARTTLS = True
+SMTP_SSL_SERVER_AUTH = False # If your using an SMTP server with a valid certificate
+SMTP_SSL = False
+SMTP_USER = os.getenv("SMTP_USER", "apikey") # use the empty string "" if using an unauthenticated SMTP server
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "") # use the empty string "" if using an unauthenticated SMTP server
+SMTP_MAIL_FROM = os.getenv("SMTP_MAIL_FROM", "partners@crfusa.com")
+EMAIL_REPORTS_SUBJECT_PREFIX = "[Superset] " # optional - overwrites default value in config.py of "[Report] "
+
+SCREENSHOT_LOCATE_WAIT = 300
+SCREENSHOT_LOAD_WAIT = 600
+
+WEBDRIVER_TYPE = "firefox"
+WEBDRIVER_BASEURL = f'https://{CONTAINER_APP_HOSTNAME}/'  # When using docker compose baseurl should be http://superset_app:8088/
+# WEBDRIVER_BASEURL = "http://localhost:8088/"
+
 # The base URL for the email report hyperlinks.
-WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
+WEBDRIVER_BASEURL_USER_FRIENDLY = "https://superset.crfusa.com/"
 SQLLAB_CTAS_NO_LIMIT = True
 
 CORS_OPTIONS = {

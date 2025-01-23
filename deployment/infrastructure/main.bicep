@@ -13,6 +13,9 @@ param supersetSecret string = ''
 @secure()
 param microsoftAuthClientSecret string = ''
 
+@secure()
+param smtpPasswordSecret string = ''
+
 var resourceToken = uniqueString(resourceGroup().id)
 
 // Helper function to generate a storage account name
@@ -93,6 +96,15 @@ module secretMicrosoftAuthClientSecret './resource-vaultsecret.bicep' = {
     vaultName: keyVault.outputs.vaultName
     secretName: 'MicrosoftAuthClientSecret'
     value: microsoftAuthClientSecret
+  }
+}
+
+module secretSmtpPassword './resource-vaultsecret.bicep' = {
+  name: 'smtp-password'
+  params: {
+    vaultName: keyVault.outputs.vaultName
+    secretName: 'SmtpPassword'
+    value: smtpPasswordSecret
   }
 }
 
@@ -195,8 +207,7 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
     location: location
     appEnvironmentName: appEnvironment.outputs.name
     appEnvironmentId: appEnvironment.outputs.environmentId
-    image: 'apache/superset:4.1.1'
-    // image: '${imageRegistry}/c2c-superset/superset:${imageTag}'
+    image: 'apache/superset:4.1.1-dev'
     external: true
     identityId: appIdentity.outputs.resourceId
     // identityClientId: appIdentity.outputs.clientId
@@ -217,6 +228,11 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
       {
         name: 'mic-auth-client-secret'
         keyVaultUrl: secretMicrosoftAuthClientSecret.outputs.secretUri
+        identity: appIdentity.outputs.resourceId
+      }
+      {
+        name: 'smtp-password'
+        keyVaultUrl: secretSmtpPassword.outputs.secretUri
         identity: appIdentity.outputs.resourceId
       }
     ]
@@ -248,6 +264,10 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
       { name: 'AUTH_OAUTH_CLIENTID', value: '1da250e9-31d2-4099-9491-38a03a67bdc5' }
       { name: 'AUTH_OAUTH_CLIENTSECRET', secretRef: 'mic-auth-client-secret' }
       { name: 'AUTH_OAUTH_TENANTID', value: 'e04b402a-cd4a-47f5-ab4c-8d132f96d81f' }
+
+      // SMTP
+      { name: 'SMTP_PASSWORD', secretRef: 'smtp-password' }
+
     ]
     // scaleRules: []
     // secrets: []

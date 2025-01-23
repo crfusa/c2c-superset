@@ -13,6 +13,9 @@ param supersetSecret string = ''
 @secure()
 param microsoftAuthClientSecret string = ''
 
+@secure()
+param smtpPasswordSecret string = ''
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2020-06-01' = {
   name: environment
   location: location
@@ -29,5 +32,6 @@ module main 'main.bicep' = {
     postgresAdminPassword: postgresAdminPassword
     supersetSecret: supersetSecret
     microsoftAuthClientSecret: microsoftAuthClientSecret
+    smtpPasswordSecret: smtpPasswordSecret
   }
 }
