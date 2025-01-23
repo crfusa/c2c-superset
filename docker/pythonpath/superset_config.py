@@ -187,6 +187,7 @@ class CustomSsoSecurityManager(SupersetSecurityManager):
                 'username': me.get('preferred_username', ''),
                 'first_name': first_name,
                 'last_name': last_name,
+                'role_keys': me.get('roles', [])
             }
 
 CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
@@ -219,6 +220,13 @@ AUTH_USER_REGISTRATION = True
 
 # The default user self registration role
 AUTH_USER_REGISTRATION_ROLE = "Gamma"
+
+AUTH_ROLES_MAPPING = {
+    "User": ["Gamma","Alpha"],
+    "Admin": ["Admin"],
+}
+
+AUTH_ROLES_SYNC_AT_LOGIN = True
 
 #
 # Optionally import superset_config_docker.py (which will have been included on
