@@ -113,6 +113,7 @@ module internalStorage './main-internalstorage.bicep' = {
   name: 'internal-storage'
   params: {
     name: storageName(env, 'store')
+    sku: 'Standard_LRS'
     location: location
     allowSharedKeyAuth: true
     vnetSubnets: [
