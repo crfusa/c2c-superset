@@ -102,59 +102,14 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-03-01-pr
   }]
 }
 
-// Create private dns zone
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2018-09-01' = if (!empty(vnetSubnetId)) {
-  name: 'privatelink.postgres.database.azure.com'
-  location: 'global'
-  tags: {}
-  properties: {}
-
-  resource networkLink 'virtualNetworkLinks' = {
-    name: uniqueString(postgresServer.id, vnetId)
-    location: 'global'
-    properties: {
-      virtualNetwork: {
-        id: vnetId
-      }
-      registrationEnabled: false
-    }
-  }
-}
-
-// Create private endpoint
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
-  name: '${name}-pe'
-  location: location
-  properties: {
-    subnet: {
-      id: vnetSubnetId
-    }
-    customNetworkInterfaceName: '${name}-nic'
-    privateLinkServiceConnections: [
-      {
-        name: '${name}-pe'
-        properties: {
-          privateLinkServiceId: postgresServer.id
-          groupIds: [
-            'postgresqlServer'
-          ]
-        }
-      }
-    ]
-  }
-
-  resource privateDnsZoneGroup 'privateDnsZoneGroups' = {
-    name: 'default'
-    properties: {
-      privateDnsZoneConfigs: [
-        {
-          name: privateDnsZone.name
-          properties: {
-            privateDnsZoneId: privateDnsZone.id
-          }
-        }
-      ]
-    }
+module pgConnection 'resource-pg-connection.bicep' = if (!empty(vnetSubnetId))  {
+  name: 'pg-connection'
+  params: {
+    name: name
+    postgresServerId: postgresServer.id
+    vnetId: vnetId
+    vnetSubnetId: vnetSubnetId
+    location: location
   }
 }
 
@@ -162,4 +117,4 @@ output id string = postgresServer.id
 output hostname string = postgresServer.properties.fullyQualifiedDomainName
 output connectionString string = 'Host=${postgresServer.properties.fullyQualifiedDomainName};Database=${databaseName};'
 output appDbName string = databaseName
-output networkInterfaceId string = privateEndpoint.properties.networkInterfaces[0].id
+output networkInterfaceId string = pgConnection.outputs.networkInterfaceId
