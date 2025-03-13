@@ -216,6 +216,7 @@ class CustomSsoSecurityManager(SupersetSecurityManager):
 CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
 AUTH_TYPE = AUTH_OAUTH if AUTH_TYPE_NAME == "AUTH_OAUTH" else AUTH_DB
 
+# https://flask-appbuilder.readthedocs.io/en/latest/security.html
 OAUTH_PROVIDERS = [
   {
     'name': 'azure',
@@ -248,10 +249,10 @@ AUTH_ROLES_MAPPING = {
     "User": ["Gamma","Alpha"],
     "Admin": ["Admin"],
     "Gamma": ["Gamma"],
-    "Partner": ["Partner"],
+    "Partner": ["Partner"], # Partner - CRFUSA
 }
 
-AUTH_ROLES_SYNC_AT_LOGIN = True
+AUTH_ROLES_SYNC_AT_LOGIN = False # This will overwrite the roles of the user at login time every time
 
 #
 # Optionally import superset_config_docker.py (which will have been included on
