@@ -247,6 +247,8 @@ AUTH_USER_REGISTRATION_ROLE = "Gamma"
 AUTH_ROLES_MAPPING = {
     "User": ["Gamma","Alpha"],
     "Admin": ["Admin"],
+    "Gamma": ["Gamma"],
+    "Partner": ["Partner"],
 }
 
 AUTH_ROLES_SYNC_AT_LOGIN = True
