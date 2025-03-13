@@ -8,9 +8,9 @@
 #
 #   http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
@@ -183,6 +183,48 @@ PROXY_FIX_CONFIG = {
 
 ### AUTH OPTIONS
 class CustomSsoSecurityManager(SupersetSecurityManager):
+
+    @property
+    def MANAGED_ROLE_NAMES(self):
+        # Return a list of all role names that are mapped in the config
+        return list(self.auth_roles_mapping.keys())
+
+    @property
+    def auth_roles_sync_at_login(self) -> bool:
+        return self.appbuilder.get_app.config["AUTH_ROLES_SYNC_AT_LOGIN"]
+
+    def auth_user_oauth(self, userinfo):
+        """
+        Override to selectively manage roles during login
+        """
+        # Override the default setting to set to False
+        original_sync_setting = self.auth_roles_sync_at_login
+        self.appbuilder.get_app.config["AUTH_ROLES_SYNC_AT_LOGIN"] = False
+
+        # Call the original method to authenticate the user
+        user = super(CustomSsoSecurityManager, self).auth_user_oauth(userinfo)
+
+        # Restore original setting
+        self.appbuilder.get_app.config["AUTH_ROLES_SYNC_AT_LOGIN"] = original_sync_setting 
+
+        if user and self.auth_roles_sync_at_login:
+            # Get the roles from oauth provider
+            provider_roles = set(self._oauth_calculate_user_roles(userinfo))
+            # Get current user roles
+            current_roles = set(user.roles)
+            
+            # Only remove managed roles that aren't in provider roles
+            roles_to_remove = set()
+            for role in current_roles:
+                if role.name in self.MANAGED_ROLE_NAMES and role not in provider_roles:
+                    roles_to_remove.add(role)
+            
+            # Update user roles
+            new_roles = (current_roles - roles_to_remove) | provider_roles
+            user.roles = list(new_roles)
+            self.update_user(user)
+        return user
+
     def oauth_user_info(self, provider, response=None):
         logging.debug("Oauth2 provider: {0}.".format(provider))
         if provider == 'azure' or provider == 'microsoft':
@@ -252,7 +294,7 @@ AUTH_ROLES_MAPPING = {
     "Partner": ["Partner"], # Partner - CRFUSA
 }
 
-AUTH_ROLES_SYNC_AT_LOGIN = False # This will overwrite the roles of the user at login time every time
+AUTH_ROLES_SYNC_AT_LOGIN = True # This will overwrite the roles of the user at login time every time
 
 #
 # Optionally import superset_config_docker.py (which will have been included on
