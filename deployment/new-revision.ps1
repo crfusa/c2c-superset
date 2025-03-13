@@ -7,5 +7,6 @@ $null = az containerapp update `
     -n "app-superset" `
     -g $Environment `
     --subscription $Subscription `
+    --container-name "app-superset" `
     --set-env-vars `
         "DateDeployed=$dateDeployed"
