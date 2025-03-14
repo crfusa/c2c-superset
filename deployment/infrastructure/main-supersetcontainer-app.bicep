@@ -81,12 +81,6 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
       ingress: {
         external: external
         targetPort: appPort
-        customDomains: [
-          {
-            name: 'superset.crfusa.com'
-            bindingType: 'SniEnabled'
-          }
-        ]
       }
       activeRevisionsMode: revisionMode
       secrets: [
@@ -152,6 +146,11 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
               mountPath: '/app/docker'
               volumeName: 'docker-conf'
               subPath: 'superset_docker'
+            }
+            {
+              mountPath: '/app/superset/static/assets/custom'
+              volumeName: 'docker-conf'
+              subPath: 'superset_static'
             }
             {
               mountPath: '/app/superset_home'

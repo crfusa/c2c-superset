@@ -50,6 +50,10 @@ AUTH_OAUTH_CLIENTID = os.getenv("AUTH_OAUTH_CLIENTID", "")
 AUTH_OAUTH_CLIENTSECRET = os.getenv("AUTH_OAUTH_CLIENTSECRET", "")
 AUTH_OAUTH_TENANTID = os.getenv("AUTH_OAUTH_TENANTID", "")
 
+# Branding
+APP_NAME = os.getenv("APP_NAME", "CRF Superset")
+APP_ICON = os.getenv("APP_ICON", "/static/assets/custom/crf_logo.svg")
+
 logger.info(f"DATABASE_HOST: {DATABASE_HOST}")
 
 # The SQLAlchemy connection string.

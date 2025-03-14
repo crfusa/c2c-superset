@@ -13,16 +13,10 @@ $keys = az storage account keys list `
 $key = $keys[0].value
 
 Write-Host "Uploading server to Azure File Share"
-# Push-Location ..
-try {
-    az storage file upload-batch `
-        --subscription $subscription `
-        --account-name $AccountName `
-        --account-key $key `
-        --source "./docker" `
-        --destination $ShareName `
-        --destination-path "superset_docker"
-}
-finally {
-    # Pop-Location
-}
+az storage file upload-batch `
+    --subscription $subscription `
+    --account-name $AccountName `
+    --account-key $key `
+    --source "./docker" `
+    --destination $ShareName `
+    --destination-path "superset_docker"
