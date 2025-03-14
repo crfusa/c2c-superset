@@ -53,6 +53,7 @@ AUTH_OAUTH_TENANTID = os.getenv("AUTH_OAUTH_TENANTID", "")
 # Branding
 APP_NAME = os.getenv("APP_NAME", "CRF Superset")
 APP_ICON = os.getenv("APP_ICON", "/static/assets/custom/crf_logo.svg")
+FAVICONS = [{"href": "/static/assets/custom/favicon.ico"}]
 
 logger.info(f"DATABASE_HOST: {DATABASE_HOST}")
 
