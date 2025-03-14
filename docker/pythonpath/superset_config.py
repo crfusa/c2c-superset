@@ -138,6 +138,7 @@ HTTP_HEADERS={"X-Frame-Options":"ALLOWALL"}
 FEATURE_FLAGS = {
     "ALERT_REPORTS": True,
     "EMBEDDED_SUPERSET": True,
+    "DASHBOARD_RBAC": True # Enable per-database access control
 }
 # ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
 
