@@ -10,7 +10,6 @@ $root = $PSScriptRoot
 
 $parameters = @(
     "--parameters", "environment=$Environment"
-    # "--parameters", "imageTag=$ImageTag"
 )
 
 # Prompt to enter secrets
@@ -32,6 +31,10 @@ if ($PromptForSecrets) {
     # Prompt for SMTP password
     $SMTPPassword = Read-Host -Prompt "SMTP Password" -AsSecureString | ConvertFrom-SecureString -AsPlainText
     if ($SMTPPassword) { $parameters += "--parameters", "smtpPasswordSecret=$SMTPPassword" }
+
+    # Prompt for MapBox key
+    $MapBoxKey = Read-Host -Prompt "MapBox Key" -AsSecureString | ConvertFrom-SecureString -AsPlainText
+    if ($MapBoxKey) { $parameters += "--parameters", "mapboxKey=$MapBoxKey" }
 
     $ErrorActionPreference = 'Continue'
 }

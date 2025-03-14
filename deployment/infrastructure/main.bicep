@@ -1,7 +1,5 @@
 param env string = resourceGroup().name
 param location string = resourceGroup().location
-// param imageRegistry string = 'c2cshared.azurecr.io'
-// param imageTag string = 'latest'
 param isProd bool = true
 
 @secure()
@@ -15,6 +13,9 @@ param microsoftAuthClientSecret string = ''
 
 @secure()
 param smtpPasswordSecret string = ''
+
+@secure()
+param mapboxKey string = ''
 
 var resourceToken = uniqueString(resourceGroup().id)
 
@@ -105,6 +106,15 @@ module secretSmtpPassword './resource-vaultsecret.bicep' = {
     vaultName: keyVault.outputs.vaultName
     secretName: 'SmtpPassword'
     value: smtpPasswordSecret
+  }
+}
+
+module secretMapboxKey './resource-vaultsecret.bicep' = {
+  name: 'mapbox-key'
+  params: {
+    vaultName: keyVault.outputs.vaultName
+    secretName: 'MapBoxKey'
+    value: mapboxKey
   }
 }
 
@@ -236,6 +246,11 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
         keyVaultUrl: secretSmtpPassword.outputs.secretUri
         identity: appIdentity.outputs.resourceId
       }
+      {
+        name: 'mapbox-key'
+        keyVaultUrl: secretMapboxKey.outputs.secretUri
+        identity: appIdentity.outputs.resourceId
+      }
     ]
     environment: [
       // Database
@@ -265,6 +280,9 @@ module appSuperset './main-supersetcontainer-app.bicep' = {
       { name: 'AUTH_OAUTH_CLIENTID', value: '1da250e9-31d2-4099-9491-38a03a67bdc5' }
       { name: 'AUTH_OAUTH_CLIENTSECRET', secretRef: 'mic-auth-client-secret' }
       { name: 'AUTH_OAUTH_TENANTID', value: 'e04b402a-cd4a-47f5-ab4c-8d132f96d81f' }
+
+      // MapBox
+      { name: 'MAPBOX_API_KEY', secretRef: 'mapbox-key' }
 
       // SMTP
       { name: 'SMTP_PASSWORD', secretRef: 'smtp-password' }

@@ -16,6 +16,9 @@ param microsoftAuthClientSecret string = ''
 @secure()
 param smtpPasswordSecret string = ''
 
+@secure()
+param mapboxKey string = ''
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2020-06-01' = {
   name: environment
   location: location
@@ -33,5 +36,6 @@ module main 'main.bicep' = {
     supersetSecret: supersetSecret
     microsoftAuthClientSecret: microsoftAuthClientSecret
     smtpPasswordSecret: smtpPasswordSecret
+    mapboxKey: mapboxKey
   }
 }

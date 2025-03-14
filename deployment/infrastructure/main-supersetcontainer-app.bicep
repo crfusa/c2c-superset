@@ -81,6 +81,12 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
       ingress: {
         external: external
         targetPort: appPort
+        customDomains: [
+          {
+            name: 'superset.crfusa.com'
+            bindingType: 'SniEnabled'
+          }
+        ]
       }
       activeRevisionsMode: revisionMode
       secrets: [

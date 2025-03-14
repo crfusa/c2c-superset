@@ -153,6 +153,9 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "") # use the empty string "" if usin
 SMTP_MAIL_FROM = os.getenv("SMTP_MAIL_FROM", "partners@crfusa.com")
 EMAIL_REPORTS_SUBJECT_PREFIX = "[Superset] " # optional - overwrites default value in config.py of "[Report] "
 
+# Mapbox configuration
+MAPBOX_API_KEY = os.environ.get("MAPBOX_API_KEY", "")
+
 SCREENSHOT_LOCATE_WAIT = 300
 SCREENSHOT_LOAD_WAIT = 600
 
