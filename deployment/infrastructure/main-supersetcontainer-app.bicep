@@ -59,7 +59,7 @@ resource cacheRef 'Microsoft.Cache/redis@2023-08-01' existing = {
   name: cacheName
 }
 
-resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
+resource app 'Microsoft.App/containerApps@2024-10-02-preview' = {
   name: name
   location: location
   identity: {
@@ -81,6 +81,12 @@ resource app 'Microsoft.App/containerApps@2024-08-02-preview' = {
       ingress: {
         external: external
         targetPort: appPort
+        customDomains: [
+          {
+            name: 'superset.crfusa.com'
+            bindingType: 'Auto'
+          }
+        ]
       }
       activeRevisionsMode: revisionMode
       secrets: [
