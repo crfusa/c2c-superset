@@ -11,8 +11,8 @@ param revisionMode 'Single' | 'Multiple' = 'Single'
 param appPort int = 8088
 param external bool
 
-param cpu string = '.25'
-param memory string = '.5Gi'
+param cpu string = '0.5'
+param memory string = '1.0Gi'
 
 param initializeSuperset bool = false
 
@@ -129,8 +129,8 @@ resource app 'Microsoft.App/containerApps@2024-10-02-preview' = {
             }
           ]
           resources: {
-            cpu: json('.25')
-            memory: '.5Gi'
+            cpu: json(cpu)
+            memory: memory
           }
         }
       ] : []
