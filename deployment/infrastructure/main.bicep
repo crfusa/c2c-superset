@@ -187,6 +187,18 @@ resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09
   }
 }
 
+// App Insights for superset environment
+resource supersetEnvInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: '${env}-env1-insights'
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
+    DisableIpMasking: true
+  }
+}
+
 // // Build connection strings
 // var postgresConnection = 'Host=${db.outputs.hostname};Username=${appIdentity.outputs.name};Database=${db.outputs.appDbName};Ssl Mode=Require'
 // var redisConnection = '${cache.outputs.hostname}:${cache.outputs.port},User=${appIdentity.outputs.principalId},ssl=True,abortConnect=False'
@@ -203,6 +215,7 @@ module appEnvironment './main-appenvironment.bicep' = {
     location: location
     insightsWorkspaceName: logAnalyticsWorkspace.name
     infrastructureSubnetId: vnet.outputs.appSubnetId
+    appInsightsConnectionString: supersetEnvInsights.properties.ConnectionString
     zoneRedundant: isProd
   }
 }

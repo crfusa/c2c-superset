@@ -33,6 +33,7 @@ resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
   resource policyAssignment 'accessPolicyAssignments' = {
     name: 'access-policy-${uniqueString(appPrincipalName)}'
     properties: {
+      #disable-next-line BCP416
       accessPolicyName: 'Data Contributor'
       objectId: appPrincipalId
       objectIdAlias: appPrincipalName
