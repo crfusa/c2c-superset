@@ -29,6 +29,16 @@ from celery.schedules import crontab
 # from flask_caching.backends.filesystemcache import FileSystemCache
 from flask_caching.backends.rediscache import RedisCache
 from flask_appbuilder.security.manager import AUTH_DB, AUTH_OAUTH
+from flask import redirect, g, request
+from flask_appbuilder import expose, IndexView
+from superset.extensions import (
+    appbuilder,
+)
+
+from superset.utils.core import (
+    get_user_id,
+)
+from superset.superset_typing import FlaskResponse
 
 logger = logging.getLogger()
 
@@ -180,7 +190,6 @@ CORS_OPTIONS = {
   'origins': ['*']
 }
 
-
 ENABLE_PROXY_FIX = True
 PROXY_FIX_CONFIG = {
     "x_for": 1,
@@ -189,6 +198,19 @@ PROXY_FIX_CONFIG = {
     "x_port": 0,
     "x_prefix": 1,
 }
+
+### Redirect from welcome page to dashboard
+
+class SupersetIndexView(IndexView):
+    @expose("/")
+    def index(self) -> FlaskResponse:
+        if not g.user or not get_user_id():
+            # Do steps for anonymous user e.g.
+            return redirect("/login")
+        # Do steps for authenticated user e.g.
+        return redirect("/dashboard/list")
+
+FAB_INDEX_VIEW = f"{SupersetIndexView.__module__}.{SupersetIndexView.__name__}"
 
 ### AUTH OPTIONS
 class CustomSsoSecurityManager(SupersetSecurityManager):
